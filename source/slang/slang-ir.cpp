@@ -2059,9 +2059,9 @@ namespace Slang
 
     UnownedStringSlice IRConstant::getStringSlice()
     {
-        assert(getOp() == kIROp_StringLit);
+        assert(getOp() == kIROp_StringLit || getOp() == kIROp_BlobLit);
         // If the transitory decoration is set, then this is uses the transitoryStringVal for the text storage.
-        // This is typically used when we are using a transitory IRInst held on the stack (such that it can be looked up in cached), 
+        // This is typically used when we are using a transitory IRInst held on the stack (such that it can be looked up in cached),
         // that just points to a string elsewhere, and NOT the typical normal style, where the string is held after the instruction in memory.
         //
         if(findDecorationImpl(kIROp_TransitoryDecoration))
@@ -2174,6 +2174,7 @@ namespace Slang
             {
                 return combineHash(code, Slang::getHashCode(value.ptrVal));
             }
+            case kIROp_BlobLit:
             case kIROp_StringLit:
             {
                 const UnownedStringSlice slice = getStringSlice();
@@ -2265,6 +2266,7 @@ namespace Slang
                 break;
             }
             case kIROp_StringLit:
+            case kIROp_BlobLit:
             {
                 const UnownedStringSlice slice = keyInst.getStringSlice();
 
@@ -2385,6 +2387,29 @@ namespace Slang
         dstSlice.numChars = uint32_t(inSlice.getLength());
 
         return static_cast<IRStringLit*>(_findOrEmitConstant(keyInst));
+    }
+
+    IRBlobLit* IRBuilder::getBlobValue(ISlangBlob* blob)
+    {
+        IRConstant keyInst;
+        memset(&keyInst, 0, sizeof(keyInst));
+
+        UnownedStringSlice inSlice((const char*)(blob->getBufferPointer()), blob->getBufferSize());
+
+        // Mark that this is on the stack...
+        IRDecoration stackDecoration;
+        memset(&stackDecoration, 0, sizeof(stackDecoration));
+        stackDecoration.m_op = kIROp_TransitoryDecoration;
+        stackDecoration.insertAtEnd(&keyInst);
+
+        keyInst.m_op = kIROp_BlobLit;
+        keyInst.typeUse.usedValue = nullptr; // not used
+
+        IRConstant::StringSliceValue& dstSlice = keyInst.value.transitoryStringVal;
+        dstSlice.chars = const_cast<char*>(inSlice.begin());
+        dstSlice.numChars = uint32_t(inSlice.getLength());
+
+        return static_cast<IRBlobLit*>(_findOrEmitConstant(keyInst));
     }
 
     IRPtrLit* IRBuilder::_getPtrValue(void* data)
@@ -3783,9 +3808,23 @@ namespace Slang
         return nullptr;
     }
 
+    IRInst* IRBuilder::emitEmbeddedDXIL(ISlangBlob *blob)
+    {
+        IRInst* args[] = { getBlobValue(blob) };
+
+        return emitIntrinsicInst(getVoidType(), kIROp_BlobLit, 1, args);
+    }
+
+    IRInst* IRBuilder::emitEmbeddedSPIRV(ISlangBlob* blob)
+    {
+        IRInst* args[] = { getBlobValue(blob) };
+
+        return emitIntrinsicInst(getVoidType(), kIROp_BlobLit, 1, args);
+    }
+
     enum class TypeCastStyle
     {
-        Unknown = -1, 
+        Unknown = -1,
         Int, Float, Bool, Ptr, Void
     };
     static TypeCastStyle _getTypeStyleId(IRType* type)
@@ -8661,6 +8700,7 @@ namespace Slang
         {
             std::cout << stringLit->getStringSlice().begin() << std::endl;
         }
+        // Dump Blob
         else
         {
             StringBuilder sb;
