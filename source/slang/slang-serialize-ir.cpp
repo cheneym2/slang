@@ -196,6 +196,12 @@ Result IRSerialWriter::write(IRModule* module, SerialSourceLocWriter* sourceLocW
                 {
                     // Special handling for the ir const derived types
                     case kIROp_BlobLit:
+                    {
+                        auto stringLit = static_cast<IRBlobLit*>(srcInst);
+                        dstInst.m_payloadType = PayloadType::String_1;
+                        dstInst.m_payload.m_stringIndices[0] = getStringIndex(stringLit->getStringSlice());
+                        break;
+                    }
                     case kIROp_StringLit:
                     {
                         auto stringLit = static_cast<IRStringLit*>(srcInst);

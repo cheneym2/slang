@@ -3812,14 +3812,14 @@ namespace Slang
     {
         IRInst* args[] = { getBlobValue(blob) };
 
-        return emitIntrinsicInst(getVoidType(), kIROp_BlobLit, 1, args);
+        return emitIntrinsicInst(getVoidType(), kIROp_EmbeddedDXIL, 1, args);
     }
 
     IRInst* IRBuilder::emitEmbeddedSPIRV(ISlangBlob* blob)
     {
         IRInst* args[] = { getBlobValue(blob) };
 
-        return emitIntrinsicInst(getVoidType(), kIROp_BlobLit, 1, args);
+        return emitIntrinsicInst(getVoidType(), kIROp_EmbeddedSPIRV, 1, args);
     }
 
     enum class TypeCastStyle
@@ -7029,6 +7029,10 @@ namespace Slang
                 dump(context, irConst->value.intVal ? "true" : "false");
                 return;
 
+            case kIROp_BlobLit:
+                dump(context, "<binary blob>");
+                return;
+
             case kIROp_StringLit:
                 dumpEncodeString(context, irConst->getStringSlice());
                 return;
@@ -8700,7 +8704,6 @@ namespace Slang
         {
             std::cout << stringLit->getStringSlice().begin() << std::endl;
         }
-        // Dump Blob
         else
         {
             StringBuilder sb;

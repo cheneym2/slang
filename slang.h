@@ -706,6 +706,9 @@ extern "C"
 
         /* When set, will generate SPIRV directly rather than via glslang. */
         SLANG_TARGET_FLAG_GENERATE_SPIRV_DIRECTLY = 1 << 10,
+
+        /* When set, the output from this target will be embedded as extra data in IR.*/
+        SLANG_TARGET_FLAG_EMBED_OUTPUT_IN_IR = 1 << 11,
     };
     constexpr static SlangTargetFlags kDefaultTargetFlags = SLANG_TARGET_FLAG_GENERATE_SPIRV_DIRECTLY;
 
@@ -787,6 +790,8 @@ extern "C"
         SLANG_STAGE_CALLABLE,
         SLANG_STAGE_MESH,
         SLANG_STAGE_AMPLIFICATION,
+
+        SLANG_STAGE_LIBRARY, //hack?
 
         // alias:
         SLANG_STAGE_PIXEL = SLANG_STAGE_FRAGMENT,
@@ -893,8 +898,9 @@ extern "C"
             EmitSpirvDirectly,          // bool
             SPIRVCoreGrammarJSON,       // stringValue0: json path
             IncompleteLibrary,          // bool, when set, will not issue an error when the linked program has unresolved extern function symbols.
-            EmbedDXIL,                  // bool
-            EmbedSPIRV,                 // bool
+            EmbedDXIL,                  // bool            
+            EmbedSPIRV,                 // bool            
+            EmbedOutputInIR,            // bool            
 
             // Downstream
 
@@ -3894,6 +3900,13 @@ namespace slang
             int                     targetIndex,
             SlangTargetFlags        flags) = 0;
 
+        virtual SLANG_NO_THROW void SLANG_MCALL setTargetGenerateWholeProgram(
+            int                     targetIndex,
+            bool                    value) = 0;
+
+        virtual SLANG_NO_THROW void SLANG_MCALL setTargetEmbedOutputInIR(
+            int                     targetIndex,
+            bool                    value) = 0;
 
             /*!
             @brief Set the floating point mode (e.g., precise or fast) to use a target.

@@ -1094,8 +1094,8 @@ INST(CastToVoid, castToVoid, 1, 0)
 INST(PtrCast, PtrCast, 1, 0)
 INST(TreatAsDynamicUniform, TreatAsDynamicUniform, 1, 0)
 
-INST(SizeOf,                            sizeOf,                     1, 0)
-INST(AlignOf,                           alignOf,                    1, 0)
+INST(SizeOf, sizeOf, 1, 0)
+INST(AlignOf, alignOf, 1, 0)
 
 INST(IsType, IsType, 3, 0)
 INST(TypeEquals, TypeEquals, 2, 0)
@@ -1107,15 +1107,15 @@ INST(IsUnsignedInt, IsUnsignedInt, 1, 0)
 INST(IsSignedInt, IsSignedInt, 1, 0)
 INST(IsVector, IsVector, 1, 0)
 
-INST(ForwardDifferentiate,                   ForwardDifferentiate,            1, 0)
+INST(ForwardDifferentiate, ForwardDifferentiate, 1, 0)
 
 // Produces the primal computation of backward derivatives, will return an intermediate context for
 // backward derivative func.
-INST(BackwardDifferentiatePrimal,            BackwardDifferentiatePrimal,     1, 0)
+INST(BackwardDifferentiatePrimal, BackwardDifferentiatePrimal, 1, 0)
 
 // Produces the actual backward derivative propagate function, using the intermediate context returned by the
 // primal func produced from `BackwardDifferentiatePrimal`.
-INST(BackwardDifferentiatePropagate,         BackwardDifferentiatePropagate,  1, 0)
+INST(BackwardDifferentiatePropagate, BackwardDifferentiatePropagate, 1, 0)
 
 // Represents the conceptual backward derivative function. Only produced by lower-to-ir and will be
 // replaced with `BackwardDifferentiatePrimal` and `BackwardDifferentiatePropagate`.
@@ -1127,52 +1127,52 @@ INST(DispatchKernel, DispatchKernel, 3, 0)
 INST(CudaKernelLaunch, CudaKernelLaunch, 6, 0)
 
 // Converts other resources (such as ByteAddressBuffer) to the equivalent StructuredBuffer
-INST(GetEquivalentStructuredBuffer,     getEquivalentStructuredBuffer, 1, 0)
+INST(GetEquivalentStructuredBuffer, getEquivalentStructuredBuffer, 1, 0)
 
 /* Layout */
-    INST(VarLayout, varLayout, 1, HOISTABLE)
+INST(VarLayout, varLayout, 1, HOISTABLE)
 
-    /* TypeLayout */
-        INST(TypeLayoutBase, typeLayout, 0, HOISTABLE)
-        INST(ParameterGroupTypeLayout, parameterGroupTypeLayout, 2, HOISTABLE)
-        INST(ArrayTypeLayout, arrayTypeLayout, 1, HOISTABLE)
-        INST(StreamOutputTypeLayout, streamOutputTypeLayout, 1, HOISTABLE)
-        INST(MatrixTypeLayout, matrixTypeLayout, 1, HOISTABLE)
-        INST(ExistentialTypeLayout, existentialTypeLayout, 0, HOISTABLE)
-        INST(StructTypeLayout, structTypeLayout, 0, HOISTABLE)
-        INST(TupleTypeLayout, tupleTypeLayout, 0, HOISTABLE)
-        INST(StructuredBufferTypeLayout, structuredBufferTypeLayout, 1, HOISTABLE)
-        // TODO(JS): Ideally we'd have the layout to the pointed to value type (ie 1 instead of 0 here). But to avoid infinite recursion we don't.
-        INST(PointerTypeLayout, ptrTypeLayout, 0, HOISTABLE)
-    INST_RANGE(TypeLayout, TypeLayoutBase, PointerTypeLayout)
+/* TypeLayout */
+INST(TypeLayoutBase, typeLayout, 0, HOISTABLE)
+INST(ParameterGroupTypeLayout, parameterGroupTypeLayout, 2, HOISTABLE)
+INST(ArrayTypeLayout, arrayTypeLayout, 1, HOISTABLE)
+INST(StreamOutputTypeLayout, streamOutputTypeLayout, 1, HOISTABLE)
+INST(MatrixTypeLayout, matrixTypeLayout, 1, HOISTABLE)
+INST(ExistentialTypeLayout, existentialTypeLayout, 0, HOISTABLE)
+INST(StructTypeLayout, structTypeLayout, 0, HOISTABLE)
+INST(TupleTypeLayout, tupleTypeLayout, 0, HOISTABLE)
+INST(StructuredBufferTypeLayout, structuredBufferTypeLayout, 1, HOISTABLE)
+// TODO(JS): Ideally we'd have the layout to the pointed to value type (ie 1 instead of 0 here). But to avoid infinite recursion we don't.
+INST(PointerTypeLayout, ptrTypeLayout, 0, HOISTABLE)
+INST_RANGE(TypeLayout, TypeLayoutBase, PointerTypeLayout)
 
-    INST(EntryPointLayout, EntryPointLayout, 1, HOISTABLE)
+INST(EntryPointLayout, EntryPointLayout, 1, HOISTABLE)
 INST_RANGE(Layout, VarLayout, EntryPointLayout)
 
 /* Attr */
-    INST(PendingLayoutAttr, pendingLayout, 1, HOISTABLE)
-    INST(StageAttr, stage, 1, HOISTABLE)
-    INST(StructFieldLayoutAttr, fieldLayout, 2, HOISTABLE)
-    INST(TupleFieldLayoutAttr, fieldLayout, 1, HOISTABLE)
-    INST(CaseTypeLayoutAttr, caseLayout, 1, HOISTABLE)
-    INST(UNormAttr, unorm, 0, HOISTABLE)
-    INST(SNormAttr, snorm, 0, HOISTABLE)
-    INST(NoDiffAttr, no_diff, 0, HOISTABLE)
+INST(PendingLayoutAttr, pendingLayout, 1, HOISTABLE)
+INST(StageAttr, stage, 1, HOISTABLE)
+INST(StructFieldLayoutAttr, fieldLayout, 2, HOISTABLE)
+INST(TupleFieldLayoutAttr, fieldLayout, 1, HOISTABLE)
+INST(CaseTypeLayoutAttr, caseLayout, 1, HOISTABLE)
+INST(UNormAttr, unorm, 0, HOISTABLE)
+INST(SNormAttr, snorm, 0, HOISTABLE)
+INST(NoDiffAttr, no_diff, 0, HOISTABLE)
 
-    /* SemanticAttr */
-        INST(UserSemanticAttr, userSemantic, 2, HOISTABLE)
-        INST(SystemValueSemanticAttr, systemValueSemantic, 2, HOISTABLE)
-    INST_RANGE(SemanticAttr, UserSemanticAttr, SystemValueSemanticAttr)
-    /* LayoutResourceInfoAttr */
-        INST(TypeSizeAttr, size, 2, HOISTABLE)
-        INST(VarOffsetAttr, offset, 2, HOISTABLE)
-    INST_RANGE(LayoutResourceInfoAttr, TypeSizeAttr, VarOffsetAttr)
-    INST(FuncThrowTypeAttr, FuncThrowType, 1, HOISTABLE)
+/* SemanticAttr */
+INST(UserSemanticAttr, userSemantic, 2, HOISTABLE)
+INST(SystemValueSemanticAttr, systemValueSemantic, 2, HOISTABLE)
+INST_RANGE(SemanticAttr, UserSemanticAttr, SystemValueSemanticAttr)
+/* LayoutResourceInfoAttr */
+INST(TypeSizeAttr, size, 2, HOISTABLE)
+INST(VarOffsetAttr, offset, 2, HOISTABLE)
+INST_RANGE(LayoutResourceInfoAttr, TypeSizeAttr, VarOffsetAttr)
+INST(FuncThrowTypeAttr, FuncThrowType, 1, HOISTABLE)
 INST_RANGE(Attr, PendingLayoutAttr, FuncThrowTypeAttr)
 
 /* Liveness */
-    INST(LiveRangeStart, liveRangeStart, 2, 0)
-    INST(LiveRangeEnd, liveRangeEnd, 0, 0)
+INST(LiveRangeStart, liveRangeStart, 2, 0)
+INST(LiveRangeEnd, liveRangeEnd, 0, 0)
 INST_RANGE(LiveRangeMarker, LiveRangeStart, LiveRangeEnd)
 
 /* IRSpecialization */
@@ -1192,6 +1192,10 @@ INST(DebugSource, DebugSource, 2, HOISTABLE)
 INST(DebugLine, DebugLine, 5, 0)
 INST(DebugVar, DebugVar, 4, 0)
 INST(DebugValue, DebugValue, 2, 0)
+
+/* Embedded Precompiled Libraries */
+INST(EmbeddedDXIL, EmbeddedDXIL, 1, 0)
+INST(EmbeddedSPIRV, EmbeddedSPIRV, 1, 0)
 
 /* Inline assembly */
 

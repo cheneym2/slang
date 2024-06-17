@@ -1344,6 +1344,10 @@ namespace Slang
             // * 'doesn't build into an executable/kernel'
             // 
             // So in some sense it is a library
+            // ADAM: The "GenerateWholeProgram" path needs to be taken for lib_6_* DX target profiles, but nothing
+            // in options sets this option for library profile targets. If the module happens to have entry points,
+            // even if the user explicitly requested a lib profile, the "effective" profile ends up used instead.
+            // I'm currently employing a hack in options to force this flag for lib_6_6 profiles.
             if (getTargetProgram()->getOptionSet().getBoolOption(CompilerOptionName::GenerateWholeProgram))
             {
                 if (compilerType == PassThroughMode::Dxc)
@@ -1905,7 +1909,8 @@ namespace Slang
         // Generate target code any entry points that
         // have been requested for compilation.
         auto entryPointCount = program->getEntryPointCount();
-        if (true || targetProgram->getOptionSet().getBoolOption(CompilerOptionName::GenerateWholeProgram))
+        // ADAM: Had to hack this to true at one point.
+        if (targetProgram->getOptionSet().getBoolOption(CompilerOptionName::GenerateWholeProgram))
         {
             targetProgram->_createWholeProgramResult(getSink(), this);
         }
@@ -1995,7 +2000,12 @@ namespace Slang
             {                
                 if (auto artifact = targetProgram->getExistingWholeProgramResult())
                 {
-                    artifacts.add(ComPtr<IArtifact>(artifact));
+                    // Another hack. Don't include regular compilation artifact in output if embedding
+                    // in IR.
+                    if (!targetProgram->getOptionSet().getBoolOption(CompilerOptionName::EmbedOutputInIR))
+                    {
+                        artifacts.add(ComPtr<IArtifact>(artifact));
+                    }                    
                 }
             }
             else
@@ -2266,19 +2276,25 @@ namespace Slang
             {
                 auto targetProgram = program->getTargetProgram(targetReq);
 
-                if (targetReq->getTarget() == CodeGenTarget::DXIL &&
-                    targetProgram->getOptionSet().getBoolOption(CompilerOptionName::EmbedDXIL))
+                if (/*targetReq->getTarget() == CodeGenTarget::DXIL &&*/
+                    targetProgram->getOptionSet().getBoolOption(CompilerOptionName::EmbedOutputInIR))
                 {
                     if (const auto artifact = targetProgram->getExistingWholeProgramResult())
                     {
-
                         ISlangBlob* blob;
-                        artifact->loadBlob(ArtifactKeep::No, &blob);
-                        auto builder = IRBuilder(targetProgram->getOrCreateIRModuleForLayout(getSink()));
-                        // set location?
-                        builder.emitEmbeddedDXIL(blob);
-
+                        artifact->loadBlob(ArtifactKeep::Yes, &blob);
+                        auto module = targetProgram->getOrCreateIRModuleForLayout(getSink());
+                        auto builder = IRBuilder(module);                       
+                        builder.setInsertInto(module);
+                        //builder.emitEmbeddedDXIL(blob);
                     }
+                }
+
+                if (true) //compileRequest->optionSet.shouldDumpIR())
+                {
+                    DiagnosticSinkWriter writer(getSink());
+                    auto module = targetProgram->getOrCreateIRModuleForLayout(getSink());
+                    dumpIR(module, getFrontEndReq()->m_irDumpOptions, "AFTER DXIL EMBEDDING", getFrontEndReq()->getSourceManager(), &writer);
                 }
             }
         }
