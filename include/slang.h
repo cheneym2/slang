@@ -969,6 +969,7 @@ extern "C"
             UseUpToDateBinaryModule,    // bool, when set, will only load
                                         // precompiled modules if it is up-to-date with its source.
 
+            EmbedDXIL,                  // bool
             CountOf,
         };
 
@@ -4151,6 +4152,13 @@ namespace slang
             int                     targetIndex,
             SlangTargetFlags        flags) = 0;
 
+        virtual SLANG_NO_THROW void SLANG_MCALL setTargetGenerateWholeProgram(
+            int                     targetIndex,
+            bool                    value) = 0;
+
+        virtual SLANG_NO_THROW void SLANG_MCALL setTargetEmbedDXIL(
+            int                     targetIndex,
+            bool                    value) = 0;
 
             /*!
             @brief Set the floating point mode (e.g., precise or fast) to use a target.
