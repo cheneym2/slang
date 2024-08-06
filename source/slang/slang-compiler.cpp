@@ -1089,23 +1089,6 @@ namespace Slang
         return SLANG_OK;
     }
 
-    bool CodeGenContext::isPrecompiled()
-    {
-        auto program = getProgram();
-
-        bool allPrecompiled = true;
-        program->enumerateIRModules([&](IRModule* irModule)
-            {
-                // TODO: Conditionalize this on target
-                if (!irModule->precompiledDXIL)
-                {
-                    allPrecompiled = false;
-                }
-            });
-
-        return allPrecompiled;
-    }
-
     SlangResult CodeGenContext::emitWithDownstreamForEntryPoints(ComPtr<IArtifact>& outArtifact)
     {
         outArtifact.setNull();
@@ -1267,15 +1250,18 @@ namespace Slang
         }
         else
         {
-            if (!isPrecompiled())
-            {
-                CodeGenContext sourceCodeGenContext(this, sourceTarget, extensionTracker);
+            CodeGenContext sourceCodeGenContext(this, sourceTarget, extensionTracker);
 
-                SLANG_RETURN_ON_FAIL(sourceCodeGenContext.emitEntryPointsSource(sourceArtifact));
-                sourceCodeGenContext.maybeDumpIntermediate(sourceArtifact);
+            // IR gets linked during emitEntryPointsSource and the context is set to
+            // HLSL, so we need to somehow indicate that in between IR linkage and
+            // HLSL emission, we need to prune the IR to remove things provided by
+            // precompiled DXIL.
+            sourceCodeGenContext.tempPruneDXIL = true;
 
-                sourceLanguage = (SourceLanguage)TypeConvertUtil::getSourceLanguageFromTarget((SlangCompileTarget)sourceTarget);
-            }
+            SLANG_RETURN_ON_FAIL(sourceCodeGenContext.emitEntryPointsSource(sourceArtifact));
+            sourceCodeGenContext.maybeDumpIntermediate(sourceArtifact);
+
+            sourceLanguage = (SourceLanguage)TypeConvertUtil::getSourceLanguageFromTarget((SlangCompileTarget)sourceTarget);
         }
 
         if (sourceArtifact)
@@ -1566,24 +1552,26 @@ namespace Slang
             libraries.addRange(linkage->m_libModules.getBuffer(), linkage->m_libModules.getCount());
         }
 
-        if (isPrecompiled())
-        {
-            auto program = getProgram();
-            program->enumerateIRModules([&](IRModule* irModule)
+        auto program = getProgram();
+        program->enumerateIRModules([&](IRModule* irModule)
+            {
+                for (auto inst : irModule->getModuleInst()->getChildren())
                 {
-                    // TODO: conditionalize on target
-                    if (irModule->precompiledDXIL)
+                    if (inst->getOp() == kIROp_EmbeddedDXIL)
                     {
+                        printf("Extracting embedded DXIL from module inst\n");
+                        auto slice = static_cast<IRBlobLit*>(inst->getOperand(0))->getStringSlice();
                         ArtifactDesc desc = ArtifactDescUtil::makeDescForCompileTarget(SLANG_DXIL);
                         desc.kind = ArtifactKind::Library;
 
                         auto library = ArtifactUtil::createArtifact(desc);
 
-                        library->addRepresentationUnknown(irModule->precompiledDXIL);
+                        library->addRepresentationUnknown(StringBlob::create(slice));
                         libraries.add(library);
+                        printf("Added embedded DXIL to libraries\n");
                     }
-                });
-        }
+                }
+            });        
 
         options.compilerSpecificArguments = allocator.allocate(compilerSpecificArguments);
         options.requiredCapabilityVersions = SliceUtil::asSlice(requiredCapabilityVersions);

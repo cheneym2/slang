@@ -581,6 +581,8 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
 
         DxcIncludeHandler includeHandler(&searchDirectories, options.fileSystemExt, options.sourceManager);
 
+        // print source to stdout
+        printf("Compile HLSL using DXC:\n%s\n", sourceBlob->getBufferPointer());
         SLANG_RETURN_ON_FAIL(dxcCompiler->Compile(dxcSourceBlob,
             wideSourcePath.begin(),
             wideEntryPointName.begin(),

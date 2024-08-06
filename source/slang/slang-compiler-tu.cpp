@@ -4,26 +4,31 @@
 #include "../core/slang-basic.h"
 #include "slang-compiler.h"
 #include "slang-ir-insts.h"
+#include "slang-ir-util.h"
 #include "slang-capability.h"
 
 namespace Slang
 {
+
+
     SLANG_NO_THROW SlangResult SLANG_MCALL Module::precompileForTargets(
         DiagnosticSink* sink,
         EndToEndCompileRequest* endToEndReq,
         TargetRequest* targetReq)
     {
         auto module = getIRModule();
-        Slang::Session* session = endToEndReq->getSession();
-        Slang::ASTBuilder* astBuilder = session->getGlobalASTBuilder();
-        Slang::Linkage* builtinLinkage = session->getBuiltinLinkage();
-        Slang::Linkage linkage(session, astBuilder, builtinLinkage);
+        auto builder = IRBuilder(module);
 
+        // TODO copy module IR to ensure we don't modify the original module
+        // except to add the precompiled blob and availableindxil decorations.
+        
+        Slang::Linkage* linkage = getLinkage();
+        
         CapabilityName precompileRequirement = CapabilityName::Invalid;
         switch (targetReq->getTarget())
         {
         case CodeGenTarget::DXIL:
-            linkage.addTarget(Slang::CodeGenTarget::DXIL);
+            linkage->addTarget(Slang::CodeGenTarget::DXIL);
             precompileRequirement = CapabilityName::dxil_lib;
             break;
         default:
@@ -72,7 +77,7 @@ namespace Slang
         }
 
         auto composite = CompositeComponentType::create(
-            &linkage,
+            linkage,
             allComponentTypes);
 
         TargetProgram tp(composite, targetReq);
@@ -87,6 +92,16 @@ namespace Slang
         CodeGenContext::Shared sharedCodeGenContext(&tp, entryPointIndices, sink, endToEndReq);
         CodeGenContext codeGenContext(&sharedCodeGenContext);
 
+        // Mark all public symbols as exported
+        for (auto inst : module->getGlobalInsts())
+        {
+            if (isSimpleHLSLDataType(inst))
+            {
+                // add export decoration to inst
+                builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
+            }            
+        }
+
         ComPtr<IArtifact> outArtifact;
         SlangResult res = codeGenContext.emitTranslationUnit(outArtifact);
         if (res != SLANG_OK)
@@ -94,10 +109,23 @@ namespace Slang
             return res;
         }
 
+        // Mark all exported functions as available in dxil
+        for (auto inst : module->getGlobalInsts())
+        {
+            if (inst->getOp() == kIROp_Func)
+            {
+                // Add available in dxil decoration to function if it was exported
+                if (inst->findDecoration<IRHLSLExportDecoration>() != nullptr)
+                {
+                    builder.addDecorationIfNotExist(inst, kIROp_AvailableInDXILDecoration);
+                }
+            }
+        }
+
         ISlangBlob* blob;
         outArtifact->loadBlob(ArtifactKeep::Yes, &blob);
 
-        auto builder = IRBuilder(module);
+        // Add the precompiled blob to the module
         builder.setInsertInto(module);
 
         switch (targetReq->getTarget())

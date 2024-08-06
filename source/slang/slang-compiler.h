@@ -2565,6 +2565,10 @@ namespace Slang
     struct CodeGenContext
     {
     public:
+        // TODO: hack to make IR->Source code path cut out dxil-provided
+        // functions during HLSL generation.
+        bool tempPruneDXIL = false;
+
         typedef List<Index> EntryPointIndices;
 
         struct Shared
@@ -2760,11 +2764,7 @@ namespace Slang
 
 
         SlangResult _emitEntryPoints(ComPtr<IArtifact>& outArtifact);
-
-	/* Checks if all modules in the target program are already compiled to the
-        target language, indicating that a pass-through linking using the
-        downstream compiler is viable.*/
-        bool isPrecompiled();
+	
     private:
         Shared* m_shared = nullptr;
     };
