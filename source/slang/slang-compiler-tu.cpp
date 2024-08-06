@@ -9,8 +9,6 @@
 
 namespace Slang
 {
-
-
     SLANG_NO_THROW SlangResult SLANG_MCALL Module::precompileForTargets(
         DiagnosticSink* sink,
         EndToEndCompileRequest* endToEndReq,
