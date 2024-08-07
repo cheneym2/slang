@@ -1477,8 +1477,7 @@ namespace Slang
 
         /// Precompile TU to target language
         virtual SLANG_NO_THROW SlangResult SLANG_MCALL precompileForTargets(
-            DiagnosticSink* sink,
-            EndToEndCompileRequest* endToEndReq,
+            DiagnosticSink* sink,            
             TargetRequest* targetReq);
 
         virtual void buildHash(DigestBuilder<SHA1>& builder) SLANG_OVERRIDE;

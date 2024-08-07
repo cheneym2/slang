@@ -11,7 +11,6 @@ namespace Slang
 {
     SLANG_NO_THROW SlangResult SLANG_MCALL Module::precompileForTargets(
         DiagnosticSink* sink,
-        EndToEndCompileRequest* endToEndReq,
         TargetRequest* targetReq)
     {
         auto module = getIRModule();
@@ -87,7 +86,7 @@ namespace Slang
         entryPointIndices.setCount(entryPointCount);
         for (Index i = 0; i < entryPointCount; i++)
             entryPointIndices[i] = i;
-        CodeGenContext::Shared sharedCodeGenContext(&tp, entryPointIndices, sink, endToEndReq);
+        CodeGenContext::Shared sharedCodeGenContext(&tp, entryPointIndices, sink, nullptr);
         CodeGenContext codeGenContext(&sharedCodeGenContext);
 
         // Mark all public symbols as exported, ensure there's at least one
