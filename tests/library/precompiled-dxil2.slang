@@ -25,5 +25,5 @@ struct Attributes
 [shader("anyhit")]
 void anyhit(inout Payload payload, Attributes attrib)
 {
-    payload.val = foo(x * y);
+    payload.val = normalFunc(x * y) + normalFuncUsesGeneric(y);
 }

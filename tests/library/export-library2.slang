@@ -7,13 +7,31 @@ cbuffer Constants {
     float y;
 }
 
-int doThing(int b)
+interface MyInterface
 {
-    return b * 3;
+    int myMethod(int a);
 }
 
-
-int foo(int a)
+struct MyType : MyInterface
 {
-    return a * a + 1 + doThing(a + 2);
+    int myMethod(int a)
+    {
+        return a * 3;
+    }
+}
+
+int genericFunc<T: MyInterface>(T arg)
+{
+    return arg.myMethod(3);
+}
+
+int normalFuncUsesGeneric(int a)
+{
+    MyType obj;
+    return genericFunc(obj);
+}
+
+int normalFunc(int a)
+{
+    return a - 2;
 }

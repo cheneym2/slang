@@ -90,15 +90,25 @@ namespace Slang
         CodeGenContext::Shared sharedCodeGenContext(&tp, entryPointIndices, sink, endToEndReq);
         CodeGenContext codeGenContext(&sharedCodeGenContext);
 
-        // Mark all public symbols as exported
+        // Mark all public symbols as exported, ensure there's at least one
+        bool hasAtLeastOneFunction = false;
         for (auto inst : module->getGlobalInsts())
         {
-            if (isSimpleHLSLDataType(inst))
+            if (inst->getOp() == kIROp_Func)
             {
-                // add export decoration to inst
-                builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
-            }            
+                if (isSimpleHLSLDataType(inst))
+                {
+                    hasAtLeastOneFunction = true;
+                    // add export decoration to inst
+                    builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
+                }
+            }
         }
+        if (!hasAtLeastOneFunction)
+        {
+            // Nothing to do
+            return SLANG_OK;
+        }        
 
         ComPtr<IArtifact> outArtifact;
         SlangResult res = codeGenContext.emitTranslationUnit(outArtifact);
