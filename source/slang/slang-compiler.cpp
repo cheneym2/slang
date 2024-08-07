@@ -1098,6 +1098,7 @@ namespace Slang
 
         CodeGenTarget sourceTarget = CodeGenTarget::None;
         SourceLanguage sourceLanguage = SourceLanguage::Unknown;
+        auto caps = getTargetCaps();
 
         auto target = getTargetFormat();
         RefPtr<ExtensionTracker> extensionTracker = _newExtensionTracker(target);
@@ -1128,6 +1129,26 @@ namespace Slang
         }
 
         SLANG_ASSERT(compilerType != PassThroughMode::None);
+
+        // HACK
+        bool libraryProfile = false;
+        if (compilerType == PassThroughMode::Fxc ||
+            compilerType == PassThroughMode::Dxc ||
+            compilerType == PassThroughMode::Glslang)
+        {
+            if (getTargetProgram()->getOptionSet().getBoolOption(CompilerOptionName::GenerateWholeProgram))
+            {
+                if (compilerType == PassThroughMode::Dxc)
+                {
+                    // Can support no entry points on DXC because we can build libraries
+                    Profile profile = Profile(getTargetProgram()->getOptionSet().getEnumOption<Profile::RawEnum>(CompilerOptionName::Profile));
+                    if (profile == Profile(0x000b0000))
+                    {
+                        libraryProfile = true;
+                    }
+                }
+            }
+        }
 
         // Get the required downstream compiler
         IDownstreamCompiler* compiler = session->getOrLoadDownstreamCompiler(compilerType, sink);
@@ -1256,7 +1277,7 @@ namespace Slang
             // HLSL, so we need to somehow indicate that in between IR linkage and
             // HLSL emission, we need to prune the IR to remove things provided by
             // precompiled DXIL.
-            sourceCodeGenContext.tempPruneDXIL = true;
+            sourceCodeGenContext.tempPruneDXIL = libraryProfile;
 
             SLANG_RETURN_ON_FAIL(sourceCodeGenContext.emitEntryPointsSource(sourceArtifact));
             sourceCodeGenContext.maybeDumpIntermediate(sourceArtifact);
@@ -1356,7 +1377,7 @@ namespace Slang
                 if (compilerType == PassThroughMode::Dxc)
                 {
                     // Can support no entry points on DXC because we can build libraries
-                    profile = Profile(getTargetProgram()->getOptionSet().getEnumOption<Profile::RawEnum>(CompilerOptionName::Profile));
+                    profile = Profile(getTargetProgram()->getOptionSet().getEnumOption<Profile::RawEnum>(CompilerOptionName::Profile));                    
                 }
                 else
                 {
@@ -1553,25 +1574,32 @@ namespace Slang
         }
 
         auto program = getProgram();
-        program->enumerateIRModules([&](IRModule* irModule)
-            {
-                for (auto inst : irModule->getModuleInst()->getChildren())
+        
+        if (!libraryProfile) {
+            program->enumerateIRModules([&](IRModule* irModule)
                 {
-                    if (inst->getOp() == kIROp_EmbeddedDXIL)
+                    for (auto inst : irModule->getModuleInst()->getChildren())
                     {
-                        printf("Extracting embedded DXIL from module inst\n");
-                        auto slice = static_cast<IRBlobLit*>(inst->getOperand(0))->getStringSlice();
-                        ArtifactDesc desc = ArtifactDescUtil::makeDescForCompileTarget(SLANG_DXIL);
-                        desc.kind = ArtifactKind::Library;
+                        if (inst->getOp() == kIROp_EmbeddedDXIL)
+                        {
+                            printf("Extracting embedded DXIL from module inst\n");
+                            auto slice = static_cast<IRBlobLit*>(inst->getOperand(0))->getStringSlice();
+                            ArtifactDesc desc = ArtifactDescUtil::makeDescForCompileTarget(SLANG_DXIL);
+                            desc.kind = ArtifactKind::Library;
 
-                        auto library = ArtifactUtil::createArtifact(desc);
+                            auto library = ArtifactUtil::createArtifact(desc);
 
-                        library->addRepresentationUnknown(StringBlob::create(slice));
-                        libraries.add(library);
-                        printf("Added embedded DXIL to libraries\n");
+                            library->addRepresentationUnknown(StringBlob::create(slice));
+                            libraries.add(library);
+                            printf("Added embedded DXIL to libraries\n");
+                        }
                     }
-                }
-            });        
+                });
+        }
+        else
+        {
+            printf("Writing to library profile, skipping the embedded dxil\n");
+        }
 
         options.compilerSpecificArguments = allocator.allocate(compilerSpecificArguments);
         options.requiredCapabilityVersions = SliceUtil::asSlice(requiredCapabilityVersions);

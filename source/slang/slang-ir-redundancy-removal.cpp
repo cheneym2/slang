@@ -157,7 +157,8 @@ void removeAvailableInDXIL(IRModule* module)
         if (globalInst->findDecoration<IRAvailableInDXILDecoration>())
         {
             printf("removing due to precompdxil:\n");
-            globalInst->dump();
+            globalInst->findDecoration<IRNameHintDecoration>()->dump();
+            //globalInst->dump();
             toRemove.add(globalInst);
         }
     }
