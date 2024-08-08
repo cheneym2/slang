@@ -18,9 +18,9 @@ namespace Slang
 
         // TODO copy module IR to ensure we don't modify the original module
         // except to add the precompiled blob and availableindxil decorations.
-        
+
         Slang::Linkage* linkage = getLinkage();
-        
+
         CapabilityName precompileRequirement = CapabilityName::Invalid;
         switch (targetReq->getTarget())
         {
@@ -43,14 +43,14 @@ namespace Slang
             // error ...: dxil libraries require $0, entry point compiled with $1.
             // warn ...: dxil libraries require $0, entry point compiled with $1, implicitly upgrading capabilities.
             maybeDiagnoseWarningOrError(
-                                sink,
-                                targetReq->getOptionSet(),
-                                DiagnosticCategory::Capability,
-                                SourceLoc(),
-                                Diagnostics::incompatibleWithPrecompileLib,
-                                Diagnostics::incompatibleWithPrecompileLibRestrictive,
-                                precompileRequirementsCapabilitySet,
-                                targetCaps);
+                sink,
+                targetReq->getOptionSet(),
+                DiagnosticCategory::Capability,
+                SourceLoc(),
+                Diagnostics::incompatibleWithPrecompileLib,
+                Diagnostics::incompatibleWithPrecompileLibRestrictive,
+                precompileRequirementsCapabilitySet,
+                targetCaps);
 
             // add precompile requirements to the cooked targetCaps
             targetCaps.join(precompileRequirementsCapabilitySet);
@@ -91,11 +91,31 @@ namespace Slang
 
         // Mark all public symbols as exported, ensure there's at least one
         bool hasAtLeastOneFunction = false;
+                
         for (auto inst : module->getGlobalInsts())
         {
             if (inst->getOp() == kIROp_Func)
             {
-                if (isSimpleHLSLDataType(inst))
+                bool hasResourceType = false;                              
+
+                // DXIL does not permit HLSLStructureBufferType in exported functions
+                auto type = as<IRFuncType>(inst->getFullType());
+                auto argCount = type->getOperandCount();// ParamCount();
+                for (UInt aa = 0; aa < argCount; ++aa)
+                {
+                    auto operand = type->getOperand(aa);// ParamType(aa);
+                    if (operand->getOp() == kIROp_HLSLStructuredBufferType)
+                    {
+                        hasResourceType = true;
+                        break;
+                    }
+                }
+
+                if (hasResourceType)
+                {
+                    printf("DEBUG: Skipping HLSLStructuredBufferType Param Type\n");                    
+                }
+                else if (isSimpleHLSLDataType(inst))
                 {
                     hasAtLeastOneFunction = true;
                     // add export decoration to inst
@@ -103,47 +123,46 @@ namespace Slang
                 }
             }
         }
-        if (!hasAtLeastOneFunction)
-        {
-            // Nothing to do
-            return SLANG_OK;
-        }        
 
-        ComPtr<IArtifact> outArtifact;
-        SlangResult res = codeGenContext.emitTranslationUnit(outArtifact);
-        if (res != SLANG_OK)
+        // Avoid emitting precompiled blob if there are no functions to export
+        if (hasAtLeastOneFunction)
         {
-            return res;
-        }
-
-        // Mark all exported functions as available in dxil
-        for (auto inst : module->getGlobalInsts())
-        {
-            if (inst->getOp() == kIROp_Func)
+            ComPtr<IArtifact> outArtifact;
+            SlangResult res = codeGenContext.emitTranslationUnit(outArtifact);
+            if (res != SLANG_OK)
             {
-                // Add available in dxil decoration to function if it was exported
-                if (inst->findDecoration<IRHLSLExportDecoration>() != nullptr)
+                return res;
+            }
+
+            // Mark all exported functions as available in dxil
+            for (auto inst : module->getGlobalInsts())
+            {
+                if (inst->getOp() == kIROp_Func)
                 {
-                    builder.addDecorationIfNotExist(inst, kIROp_AvailableInDXILDecoration);
+                    // Add available in dxil decoration to function if it was exported
+                    if (inst->findDecoration<IRHLSLExportDecoration>() != nullptr)
+                    {
+                        builder.addDecorationIfNotExist(inst, kIROp_AvailableInDXILDecoration);
+                    }
                 }
             }
-        }
 
-        ISlangBlob* blob;
-        outArtifact->loadBlob(ArtifactKeep::Yes, &blob);
+            ISlangBlob* blob;
+            outArtifact->loadBlob(ArtifactKeep::Yes, &blob);
 
-        // Add the precompiled blob to the module
-        builder.setInsertInto(module);
+            // Add the precompiled blob to the module
+            builder.setInsertInto(module);
 
-        switch (targetReq->getTarget())
-        {
-        case CodeGenTarget::DXIL:
-            builder.emitEmbeddedDXIL(blob);
-            break;
-        default:
-            assert(!"Unhandled target");
-            break;
-        }
+            switch (targetReq->getTarget())
+            {
+            case CodeGenTarget::DXIL:
+                builder.emitEmbeddedDXIL(blob);
+                break;
+            default:
+                assert(!"Unhandled target");
+                break;
+            }
+        }        
 
         return SLANG_OK;
     }
