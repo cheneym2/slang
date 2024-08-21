@@ -68,6 +68,7 @@ namespace Slang
         {
             if (inst->getOp() == kIROp_Func)
             {
+                //inst->dump();
                 bool hasResourceType = false;
 
                 // DXIL does not permit HLSLStructureBufferType in exported functions
@@ -76,7 +77,7 @@ namespace Slang
                 for (UInt aa = 0; aa < argCount; ++aa)
                 {
                     auto operand = type->getOperand(aa);
-                    if (operand->getOp() == kIROp_HLSLStructuredBufferType)
+                    if (operand->getOp() == kIROp_HLSLStructuredBufferType || operand->getOp() == kIROp_MatrixType)
                     {
                         hasResourceType = true;
                         break;

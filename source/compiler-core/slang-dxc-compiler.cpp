@@ -593,11 +593,13 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
             dxcOperationResult.writeRef()));
 
         SLANG_RETURN_ON_FAIL(_handleOperationResult(dxcOperationResult, diagnostics, dxcResultBlob));
+        printf("DXC Compile success\n");
     }
 
     // If we have libraries then we need to link...
     if (libraries.getCount())
     {
+        printf("DXC linking there are %d libraries\n", libraries.getCount());
         ComPtr<IDxcLinker> linker;
         SLANG_RETURN_ON_FAIL(m_createInstance(CLSID_DxcLinker, __uuidof(linker), (void**)linker.writeRef()));
 
@@ -656,6 +658,7 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
         wideProfileName = asString(options.profileName).toWString();
 
         ComPtr<IDxcOperationResult> linkDxcResult;
+        printf("Linking Profile is %s\n", asString(options.profileName).begin());//);// .getBuffer());
         SLANG_RETURN_ON_FAIL(linker->Link(wideEntryPointName.begin(), wideProfileName.begin(), linkLibraryNames.getBuffer(), UINT32(librariesCount), nullptr, 0, linkDxcResult.writeRef()));
 
         ComPtr<IDxcBlob> linkedBlob;
