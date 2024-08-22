@@ -66,6 +66,8 @@ namespace Slang
 
         for (auto inst : module->getGlobalInsts())
         {
+            //printf("===================== START GLOBAL INSTRUCTION ==================================\n");
+            //inst->dump();
             if (inst->getOp() == kIROp_Func)
             {
                 //inst->dump();
@@ -91,10 +93,13 @@ namespace Slang
                         // add HLSL export decoration to inst to preserve it in precompilation
                         hasAtLeastOneFunction = true;
                         builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
+            //          printf("---------- Adding HLSL Export Decoration -------------\n");
                     }
                 }
             }
+            //printf("=====================   END GLOBAL INSTRUCTION ==================================\n");
         }
+               
 
         // Avoid emitting precompiled blob if there are no functions to export
         if (hasAtLeastOneFunction)
@@ -130,6 +135,17 @@ namespace Slang
             {
             case CodeGenTarget::DXIL:
                 builder.emitEmbeddedDXIL(blob);
+                /*
+                printf("Embeddedd DXIL blob\n");
+                FILE* f = fopen("embedded_dxil.bin", "wb");
+                if (!f)
+                {
+                    printf("Failed to write embedded DXIL blob to embedded_dxil.bin\n");
+                }
+                fwrite(blob->getBufferPointer(), 1, blob->getBufferSize(), f);
+                fclose(f);
+                printf("Wrote embedded DXIL blob to embedded_dxil.bin\n");
+                */
                 break;
             }
         }

@@ -581,6 +581,8 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
 
         DxcIncludeHandler includeHandler(&searchDirectories, options.fileSystemExt, options.sourceManager);
 
+        //printf("DXC Compile this HLSL\n");
+        //printf("%s\n", dxcSourceBlob->GetBufferPointer());
         SLANG_RETURN_ON_FAIL(dxcCompiler->Compile(dxcSourceBlob,
             wideSourcePath.begin(),
             wideEntryPointName.begin(),
@@ -608,6 +610,7 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
         List<ComPtr<ISlangBlob>> libraryBlobs;
         List<OSString> libraryNames;
 
+        //int libraryIndex = 0;
         for (IArtifact* library : libraries)
         {
             ComPtr<ISlangBlob> blob;
@@ -615,6 +618,19 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
 
             libraryBlobs.add(blob);
             libraryNames.add(String(_addName(library, pool)).toWString());
+
+            /*
+            char outfilename[1024];
+            sprintf(outfilename, "library_%d.bin", libraryIndex);
+            printf("Library %d written to %s\n", libraryIndex, outfilename);
+            FILE* f = fopen(outfilename, "wb");
+            printf("Opened file %s\n", outfilename);    
+            fwrite(blob->getBufferPointer(), 1, blob->getBufferSize(), f);
+            printf("Wrote to file %s\n", outfilename);
+            fclose(f);
+            printf("Closed file %s\n", outfilename);
+            libraryIndex++;
+            */
         }
 
         if (hasSource)
@@ -635,6 +651,15 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
                 auto blob = (ISlangBlob*)dxcResultBlob.get();
                 libraryBlobs.add(ComPtr<ISlangBlob>(blob));
                 libraryNames.add(String(_addName(name.getUnownedSlice(), pool)).toWString());
+
+                /*
+                char outfilename[1024];
+                sprintf(outfilename, "library_src.bin");
+                printf("Library 'src' written to %s\n", outfilename);
+                FILE* f = fopen(outfilename, "wb");
+                fwrite(blob->getBufferPointer(), 1, blob->getBufferSize(), f);
+                fclose(f);
+                */
             }
         }
 

@@ -1128,27 +1128,7 @@ namespace Slang
             }
         }
 
-        SLANG_ASSERT(compilerType != PassThroughMode::None);
-
-	       // HACK
-        bool libraryProfile = false;
-        if (compilerType == PassThroughMode::Fxc ||
-            compilerType == PassThroughMode::Dxc ||
-            compilerType == PassThroughMode::Glslang)
-        {
-            if (getTargetProgram()->getOptionSet().getBoolOption(CompilerOptionName::GenerateWholeProgram))
-            {
-                if (compilerType == PassThroughMode::Dxc)
-                {
-                    // Can support no entry points on DXC because we can build libraries
-                    Profile profile = Profile(getTargetProgram()->getOptionSet().getEnumOption<Profile::RawEnum>(CompilerOptionName::Profile));
-                    if (profile == Profile(0x000b0000))
-                    {
-                        libraryProfile = true;
-                    }
-                }
-            }
-        }
+        SLANG_ASSERT(compilerType != PassThroughMode::None);       	    
 
         // Get the required downstream compiler
         IDownstreamCompiler* compiler = session->getOrLoadDownstreamCompiler(compilerType, sink);
@@ -1575,9 +1555,7 @@ namespace Slang
         auto program = getProgram();
 
         // Load embedded precompiled libraries from IR into library artifacts
-	if (!libraryProfile) //HACK
-	{
-        program->enumerateIRModules([&](IRModule* irModule)
+	    program->enumerateIRModules([&](IRModule* irModule)
         {
             for (auto inst : irModule->getModuleInst()->getChildren())
             {
@@ -1596,12 +1574,7 @@ namespace Slang
                     }
                 }
             }
-        });
-	}
-	else
-	{
-		printf("Skip linking in embedded dxil for library profile\n");
-	}
+        });	
 
         options.compilerSpecificArguments = allocator.allocate(compilerSpecificArguments);
         options.requiredCapabilityVersions = SliceUtil::asSlice(requiredCapabilityVersions);

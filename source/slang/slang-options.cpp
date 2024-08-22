@@ -701,7 +701,7 @@ struct OptionsParser
     void setProfile(RawTarget* rawTarget, Profile profile);
     void addCapabilityAtom(RawTarget* rawTarget, CapabilityName atom);
 
-    SlangResult addEmbeddedLibrary(const CodeGenTarget format, CompilerOptionName option);
+    //SlangResult addEmbeddedLibrary(const CodeGenTarget format, CompilerOptionName option);
     
     void setFloatingPointMode(RawTarget* rawTarget, FloatingPointMode mode);
     
@@ -1639,9 +1639,12 @@ SlangResult OptionsParser::_parseProfile(const CommandLineArg& arg)
     return SLANG_OK;
 }
 
+/*
 // Creates a target of the specified type whose output will be embedded as IR metadata
 SlangResult OptionsParser::addEmbeddedLibrary(const CodeGenTarget format, CompilerOptionName option)
 {
+    return SLANG_OK;
+
     RawTarget rawTarget;
     rawTarget.format = format;
     // Silently allow redundant targets if it is the same as the last specified target.
@@ -1654,7 +1657,7 @@ SlangResult OptionsParser::addEmbeddedLibrary(const CodeGenTarget format, Compil
     getCurrentTarget()->optionSet.add(CompilerOptionName::GenerateWholeProgram, true);
 
     return SLANG_OK;
-}
+}*/
 
 SlangResult OptionsParser::_parse(
     int             argc,
@@ -1947,7 +1950,7 @@ SlangResult OptionsParser::_parse(
                 linkage->m_optionSet.set(optionKind, compressionType);
                 break;
             }
-            case OptionKind::EmbedDXIL: SLANG_RETURN_ON_FAIL(addEmbeddedLibrary(CodeGenTarget::DXIL, CompilerOptionName::EmbedDXIL)); break;
+            case OptionKind::EmbedDXIL: this->m_compileRequest->setEmbedDXIL(true); break;
             case OptionKind::Target:
             {
                 CommandLineArg name;
@@ -2150,7 +2153,6 @@ SlangResult OptionsParser::_parse(
                 const Index equalIndex = slice.indexOf('=');
 
                 // Now set the preprocessor define
-
                 if (equalIndex >= 0)
                 {
                     // If we found an `=`, we split the string...
@@ -2785,10 +2787,10 @@ SlangResult OptionsParser::_parse(
                 m_compileRequest->setTargetGenerateWholeProgram(targetID, true);
             }
 
-            if (rawTarget.optionSet.getBoolOption(CompilerOptionName::EmbedDXIL))
-            {
-                m_compileRequest->setTargetEmbedDXIL(targetID, true);
-            }
+            //if (rawTarget.optionSet.getBoolOption(CompilerOptionName::EmbedDXIL))
+            //{
+             //   m_compileRequest->setTargetEmbedDXIL(targetID, true);
+            //}
         }
 
         // Next we need to sort out the output files specified with `-o`, and
