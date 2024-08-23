@@ -6349,6 +6349,14 @@ namespace Slang
     IRDecoration* IRBuilder::addDecoration(IRInst* value, IROp op, IRInst* const* operands, Int operandCount)
     {
         // If it's a simple (ie stateless) decoration, don't add it again.
+        /*
+        if (op == kIROp_HLSLExportDecoration)
+        {
+            printf("START core addDecoration HLSLExport\n");
+            value->dump();
+            printf("END core addDecoration HLSLExport\n");
+        }
+        */
         if (operandCount == 0 && isSimpleDecoration(op))
         {
             auto decoration = value->findDecorationImpl(op);

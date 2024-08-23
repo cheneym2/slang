@@ -1585,7 +1585,11 @@ SlangResult CodeGenContext::emitEntryPointsSourceFromIR(ComPtr<IArtifact>& outAr
             this,
             linkingAndOptimizationOptions,
             linkedIR));
-        
+
+        //printf("LINKED IR=======================================\n");
+        //linkedIR.module->getModuleInst()->dump();
+        //printf("LINKED IR END======================================\n");
+
         auto irModule = linkedIR.module;
         
         // Perform final simplifications to help emit logic to generate more compact code.

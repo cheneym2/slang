@@ -2949,7 +2949,7 @@ void FrontEndCompileRequest::generateIR()
 
         /// Generate IR for translation unit.
         RefPtr<IRModule> irModule(generateIRForTranslationUnit(getLinkage()->getASTBuilder(), translationUnit));
-
+                
         if (verifyDebugSerialization)
         {
             SerialContainerUtil::WriteOptions options;
@@ -3242,7 +3242,7 @@ SlangResult EndToEndCompileRequest::executeActionsInner()
         return SLANG_OK;
     }
 
-    // If requested, attempt to compile the translation unit all the way down to the target language
+    // If requested, attempt to compile the translation units all the way down to the target language
     // and stash the result blob in an IR op.
     if (getOptionSet().getBoolOption(CompilerOptionName::EmbedDXIL))
     {

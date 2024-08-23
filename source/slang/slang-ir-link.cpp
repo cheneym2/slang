@@ -1737,7 +1737,7 @@ LinkedIR linkIR(
     {
         irModules.add(irModule);
     });
-
+        
     // Add any modules that were loaded as libraries
     for (IRModule* irModule : irModules)
     {
@@ -1751,7 +1751,7 @@ LinkedIR linkIR(
     //
     auto irModuleForLayout = targetProgram->getExistingIRModuleForLayout();
     insertGlobalValueSymbols(sharedContext, irModuleForLayout);
-
+        
     auto context = state->getContext();
 
     // Combine all of the contents of IRGlobalHashedStringLiterals
@@ -1841,6 +1841,9 @@ LinkedIR linkIR(
             if (_isHLSLExported(inst) ||
                 shouldCopyGlobalParams && as<IRGlobalParam>(inst))
             {
+                //printf("START CLONING INST\n");
+                //inst->dump();
+                //printf("END CLONING INST\n");
                 auto cloned = cloneValue(context, inst);
                 if (!cloned->findDecorationImpl(kIROp_KeepAliveDecoration))
                 {

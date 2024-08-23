@@ -581,7 +581,18 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
 
         DxcIncludeHandler includeHandler(&searchDirectories, options.fileSystemExt, options.sourceManager);
 
-        //printf("DXC Compile this HLSL\n");
+#define DUMP_SOURCE 0
+#if DUMP_SOURCE
+        printf("Writing HLSL source to compile\n");
+        FILE* f = fopen("src.txt", "wb");
+        fwrite(sourceBlob->getBufferPointer(), 1, sourceBlob->getBufferSize(), f);
+        fclose(f);
+        printf("Wrote hlsl to src.txt\n");
+        for (const auto& arg : args)
+        {
+            printf("Compile arg %S\n", arg);
+        }        
+#endif DUMP_SOURCE
         //printf("%s\n", dxcSourceBlob->GetBufferPointer());
         SLANG_RETURN_ON_FAIL(dxcCompiler->Compile(dxcSourceBlob,
             wideSourcePath.begin(),
@@ -610,7 +621,10 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
         List<ComPtr<ISlangBlob>> libraryBlobs;
         List<OSString> libraryNames;
 
-        //int libraryIndex = 0;
+#define DUMP_BINS 0
+#if DUMP_BINS
+        int libraryIndex = 0;
+#endif //DUMP_BINS
         for (IArtifact* library : libraries)
         {
             ComPtr<ISlangBlob> blob;
@@ -619,7 +633,7 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
             libraryBlobs.add(blob);
             libraryNames.add(String(_addName(library, pool)).toWString());
 
-            /*
+#if DUMP_BINS
             char outfilename[1024];
             sprintf(outfilename, "library_%d.bin", libraryIndex);
             printf("Library %d written to %s\n", libraryIndex, outfilename);
@@ -630,7 +644,7 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
             fclose(f);
             printf("Closed file %s\n", outfilename);
             libraryIndex++;
-            */
+#endif //DUMP_BINS
         }
 
         if (hasSource)
@@ -652,14 +666,14 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
                 libraryBlobs.add(ComPtr<ISlangBlob>(blob));
                 libraryNames.add(String(_addName(name.getUnownedSlice(), pool)).toWString());
 
-                /*
+#if DUMP_BINS
                 char outfilename[1024];
                 sprintf(outfilename, "library_src.bin");
                 printf("Library 'src' written to %s\n", outfilename);
                 FILE* f = fopen(outfilename, "wb");
                 fwrite(blob->getBufferPointer(), 1, blob->getBufferSize(), f);
                 fclose(f);
-                */
+#endif //DUMP_BINS
             }
         }
 
@@ -684,7 +698,29 @@ SlangResult DXCDownstreamCompiler::compile(const CompileOptions& inOptions, IArt
 
         ComPtr<IDxcOperationResult> linkDxcResult;
         printf("Linking Profile is %s\n", asString(options.profileName).begin());//);// .getBuffer());
-        SLANG_RETURN_ON_FAIL(linker->Link(wideEntryPointName.begin(), wideProfileName.begin(), linkLibraryNames.getBuffer(), UINT32(librariesCount), nullptr, 0, linkDxcResult.writeRef()));
+#if 0
+        printf("Linking %d libraries\n", librariesCount);
+        printf("Linking Entry Point is %s\n", asString(options.entryPointName).begin());
+        printf("%p\n", wideEntryPointName.begin());
+        printf("length of entrypoint name is %d\n", int(strlen(asString(options.entryPointName).begin()))); 
+        for (const auto& arg : args)
+        {
+            printf("Link arg %S\n", arg);
+        }
+        if (int(strlen(asString(options.entryPointName).begin())) == 0)
+        {
+            printf("Entry point name is empty\n");
+            //SLANG_RETURN_ON_FAIL(linker->Link(nullptr, wideProfileName.begin(), linkLibraryNames.getBuffer(), UINT32(librariesCount), nullptr, 0, linkDxcResult.writeRef()));
+            SLANG_RETURN_ON_FAIL(linker->Link(L"MdlRadianceClosestHitProgram", wideProfileName.begin(), linkLibraryNames.getBuffer(), UINT32(librariesCount), nullptr, 0, linkDxcResult.writeRef()));
+        }
+        else
+        {
+#endif
+            SLANG_RETURN_ON_FAIL(linker->Link(wideEntryPointName.begin(), wideProfileName.begin(), linkLibraryNames.getBuffer(), UINT32(librariesCount), nullptr, 0, linkDxcResult.writeRef()));
+#if 0
+}
+#endif
+        printf("DXC Link success\n");
 
         ComPtr<IDxcBlob> linkedBlob;
         SLANG_RETURN_ON_FAIL(_handleOperationResult(linkDxcResult, diagnostics, linkedBlob));

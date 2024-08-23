@@ -4858,7 +4858,17 @@ public:
     }
     void addHLSLExportDecoration(IRInst* value)
     {
+        // find and print namehint decoration
+        //if (auto dec = value->findDecoration<IRNameHintDecoration>())
+        //{
+        //    printf("Start add HLSLExportDecoration\n");
+            //dec->dump();
+        //    value->dump();
+
+           
+        //}
         addDecoration(value, kIROp_HLSLExportDecoration);
+        //printf("End add HLSLExportDecoration\n");
     }
     void addHasExplicitHLSLBindingDecoration(IRInst* value)
     {

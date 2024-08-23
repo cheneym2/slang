@@ -90,10 +90,12 @@ namespace Slang
                 {
                     if (isSimpleHLSLDataType(inst))
                     {
+                        if (!inst->findDecoration<IRUnsafeForceInlineEarlyDecoration>())
+                        {                        
                         // add HLSL export decoration to inst to preserve it in precompilation
                         hasAtLeastOneFunction = true;
                         builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
-            //          printf("---------- Adding HLSL Export Decoration -------------\n");
+                        }
                     }
                 }
             }
