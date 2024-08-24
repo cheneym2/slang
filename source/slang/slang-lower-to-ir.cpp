@@ -10039,6 +10039,11 @@ struct DeclLoweringVisitor : DeclVisitor<DeclLoweringVisitor, LoweredValInfo>
                 getBuilder()->addDecoration(irFunc, kIROp_NonDynamicUniformReturnDecoration);
         }
 
+        if (isFromStdLib(decl))
+        {            
+            getBuilder()->addDecoration(irFunc, kIROp_FromStdLibDecoration);
+        }
+
         verifyComputeDerivativeGroupModifiers(
             getSink(),
             decl->loc,

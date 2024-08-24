@@ -781,6 +781,7 @@ INST_RANGE(BindingQuery, GetRegisterIndex, GetRegisterSpace)
     INST(WaveSizeDecoration,                waveSize,               1, 0)
 
     INST(AvailableInDXILDecoration,         availableInDXIL,        0, 0)
+    INST(FromStdLibDecoration,              fromStdLibDecoration,   0, 0)
 
         // Added to IRParam parameters to an entry point
     /* GeometryInputPrimitiveTypeDecoration */

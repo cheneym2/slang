@@ -66,11 +66,8 @@ namespace Slang
 
         for (auto inst : module->getGlobalInsts())
         {
-            //printf("===================== START GLOBAL INSTRUCTION ==================================\n");
-            //inst->dump();
             if (inst->getOp() == kIROp_Func)
             {
-                //inst->dump();
                 bool hasResourceType = false;
 
                 // DXIL does not permit HLSLStructureBufferType in exported functions
@@ -90,18 +87,16 @@ namespace Slang
                 {
                     if (isSimpleHLSLDataType(inst))
                     {
-                        if (!inst->findDecoration<IRUnsafeForceInlineEarlyDecoration>())
-                        {                        
-                        // add HLSL export decoration to inst to preserve it in precompilation
-                        hasAtLeastOneFunction = true;
-                        builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
+                        if (!inst->findDecoration<IRFromStdLibDecoration>())
+                        {
+                            // add HLSL export decoration to inst to preserve it in precompilation
+                            hasAtLeastOneFunction = true;
+                            builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
                         }
                     }
                 }
             }
-            //printf("=====================   END GLOBAL INSTRUCTION ==================================\n");
         }
-               
 
         // Avoid emitting precompiled blob if there are no functions to export
         if (hasAtLeastOneFunction)
