@@ -7,6 +7,8 @@
 #include "slang-ir-util.h"
 #include "slang-capability.h"
 
+#define DEBUG_PRECOMPILE_DXIL 0
+
 namespace Slang
 {
     SLANG_NO_THROW SlangResult SLANG_MCALL Module::precompileForTarget(
@@ -65,9 +67,13 @@ namespace Slang
         bool hasAtLeastOneFunction = false;
 
         for (auto inst : module->getGlobalInsts())
-        {
+        {            
             if (inst->getOp() == kIROp_Func)
             {
+#if DEBUG_PRECOMPILE_DXIL
+                auto name = inst->findDecoration<IRNameHintDecoration>();
+#endif
+
                 bool hasResourceType = false;
 
                 // DXIL does not permit HLSLStructureBufferType in exported functions
@@ -78,6 +84,10 @@ namespace Slang
                     auto operand = type->getOperand(aa);
                     if (operand->getOp() == kIROp_HLSLStructuredBufferType || operand->getOp() == kIROp_MatrixType)
                     {
+#if DEBUG_PRECOMPILE_DXIL
+                        printf("Skipping function with resource or matrix type:\n");
+                        name->dump();
+#endif
                         hasResourceType = true;
                         break;
                     }
@@ -87,11 +97,49 @@ namespace Slang
                 {
                     if (isSimpleHLSLDataType(inst))
                     {
-                        if (!inst->findDecoration<IRFromStdLibDecoration>())
+#if DEBUG_PRECOMPILE_DXIL
+                        if (inst->findDecoration<IRUnsafeForceInlineEarlyDecoration>())
+                        {                            
+                            printf("Skipping function with unsafe force inline early:\n");
+                            name->dump();
+                        }
+
+#endif
+
+                        if (!inst->findDecoration<IRUnsafeForceInlineEarlyDecoration>())
                         {
-                            // add HLSL export decoration to inst to preserve it in precompilation
-                            hasAtLeastOneFunction = true;
-                            builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);
+                            bool hasBody = false;
+                            for (auto child : inst->getChildren())
+                            {
+                                if (child->getOp() == kIROp_Block)
+                                {
+                                    hasBody = true;
+                                    break;
+                                }
+                            }
+                            if (hasBody)
+                            {
+#if DEBUG_PRECOMPILE_DXIL
+                                printf("Exporting function:\n");
+                                name->dump();
+                                if (inst->findDecoration<IRFromStdLibDecoration>())
+                                {
+                                    printf("!!!!!!!!!!!!!!!! Unexpectedly exporting function from stdlib:\n");
+                                    name->dump();
+                                }                            
+#endif
+
+                                // add HLSL export decoration to inst to preserve it in precompilation
+                                hasAtLeastOneFunction = true;
+                                builder.addDecorationIfNotExist(inst, kIROp_HLSLExportDecoration);                             
+                            }
+#if DEBUG_PRECOMPILE_DXIL
+                            else
+                            {
+                                printf("Skipping function without body:\n");
+                                name->dump();
+                            }
+#endif
                         }
                     }
                 }
