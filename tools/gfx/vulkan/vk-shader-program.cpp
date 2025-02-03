@@ -116,9 +116,6 @@ Result ShaderProgramImpl::createShaderModule(
     slang::EntryPointReflection* entryPointInfo,
     List<ComPtr<ISlangBlob>> kernelCodes)
 {
-    //for (auto kernelCode : kernelCodes)
-    //    m_codeBlobs.add(kernelCode);
-
     ComPtr<ISlangBlob> linkedKernel = LinkWithSPIRVTools(kernelCodes);
     m_codeBlobs.add(linkedKernel);
 
@@ -130,7 +127,6 @@ Result ShaderProgramImpl::createShaderModule(
         linkedKernel,
         (VkShaderStageFlagBits)VulkanUtil::getShaderStage(entryPointInfo->getStage()),
         shaderModule));
-    
     m_entryPointNames.add(realEntryPointName);
     m_modules.add(shaderModule);
     return SLANG_OK;

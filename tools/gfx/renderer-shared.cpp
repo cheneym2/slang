@@ -1110,15 +1110,15 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
     {
         auto stage = entryPointInfo->getStage();
 
-        List<ComPtr<ISlangBlob> > kernelCodes;
-        ComPtr<ISlangBlob> kernelCode;
+        List<ComPtr<ISlangBlob>> kernelCodes;
         {
+            ComPtr<ISlangBlob> spirv;
             ComPtr<ISlangBlob> diagnostics;
             auto compileResult = device->getEntryPointCodeFromShaderCache(
                 entryPointComponent,
                 entryPointIndex,
                 0,
-                kernelCode.writeRef(),
+                spirv.writeRef(),
                 diagnostics.writeRef());
             if (diagnostics)
             {
@@ -1131,7 +1131,7 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
                     (char*)diagnostics->getBufferPointer());
             }
             SLANG_RETURN_ON_FAIL(compileResult);
-            kernelCodes.add(kernelCode);
+            kernelCodes.add(spirv);
         }
 
         // If target precompilation was used, kernelCode may only represent the

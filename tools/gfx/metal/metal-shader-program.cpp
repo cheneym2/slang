@@ -26,7 +26,7 @@ Result ShaderProgramImpl::createShaderModule(
     Module module;
     module.stage = entryPointInfo->getStage();
     module.entryPointName = entryPointInfo->getNameOverride();
-    assert(kernelCodes.getCount() == 1);
+    SLANG_ASSERT(kernelCodes.getCount() == 1);
     module.code = kernelCodes[0];
 
 

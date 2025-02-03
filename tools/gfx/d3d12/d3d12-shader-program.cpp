@@ -15,7 +15,7 @@ Result ShaderProgramImpl::createShaderModule(
     ShaderBinary shaderBin;
     shaderBin.stage = entryPointInfo->getStage();
     shaderBin.entryPointInfo = entryPointInfo;
-    assert(kernelCodes.getCount() == 1); // Only one kernel code is supported for now
+    SLANG_ASSERT(kernelCodes.getCount() == 1);
     shaderBin.code.addRange(
         reinterpret_cast<const uint8_t*>(kernelCodes[0]->getBufferPointer()),
         (Index)kernelCodes[0]->getBufferSize());
