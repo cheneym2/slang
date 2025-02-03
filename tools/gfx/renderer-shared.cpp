@@ -1179,8 +1179,8 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
                         {
                             ComPtr<slang::IBlob> diagnosticsBlob;
                             auto result = precompileService->getPrecompiledTargetCode(
-                                    SLANG_SPIRV,
-                                    spirv.writeRef(),
+                                SLANG_SPIRV,
+                                spirv.writeRef(),
                                 diagnosticsBlob.writeRef());
                             if (result == SLANG_OK)
                             {
@@ -1235,7 +1235,7 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
 
 Result ShaderProgramBase::createShaderModule(
     slang::EntryPointReflection* entryPointInfo,
-    Slang::List<ComPtr<ISlangBlob> > kernelCodes)
+    Slang::List<ComPtr<ISlangBlob>> kernelCodes)
 {
     SLANG_UNUSED(entryPointInfo);
     SLANG_UNUSED(kernelCodes);
