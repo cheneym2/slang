@@ -4871,8 +4871,10 @@ ISlangUnknown* ComponentType::getInterface(Guid const& guid)
     {
         return static_cast<slang::IComponentType*>(this);
     }
+#if (SLANG_WINDOWS_FAMILY || SLANG_LINUX_FAMILY)
     if (guid == IModulePrecompileService_Experimental::getTypeGuid())
         return static_cast<slang::IModulePrecompileService_Experimental*>(this);
+#endif
     return nullptr;
 }
 
