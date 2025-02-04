@@ -1140,9 +1140,11 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
                 slang::IModulePrecompileService_Experimental::getTypeGuid(),
                 (void**)componentPrecompileService.writeRef()) == SLANG_OK)
         {
+printf("componentPrecompileService true\n");
             SlangInt dependencyCount = componentPrecompileService->getModuleDependencyCount();
             if (dependencyCount > 0)
             {
+printf("modulePrecompileService sees dependencycount %d\n", dependencyCount);
                 for (int dependencyIndex = 0; dependencyIndex < dependencyCount; dependencyIndex++)
                 {
                     ComPtr<slang::IModule> dependencyModule;
@@ -1175,6 +1177,7 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
                             (void**)precompileService.writeRef());
                         if (result == SLANG_OK)
                         {
+printf("modulePrecompileService true\n");
                             ComPtr<slang::IBlob> diagnosticsBlob;
                             auto result = precompileService->getPrecompiledTargetCode(
                                     SLANG_SPIRV,
@@ -1182,8 +1185,12 @@ Result ShaderProgramBase::compileShaders(RendererBase* device)
                                 diagnosticsBlob.writeRef());
                             if (result == SLANG_OK)
                             {
+printf("modulePrecompileService returned true, get blob, add to kernelCodes\n");
                                 kernelCodes.add(spirv);
                             }
+else {
+printf("modulePrecompileService returned false, no blob\n");
+}
                             if (diagnosticsBlob)
                             {
                                 DebugMessageType msgType = DebugMessageType::Warning;

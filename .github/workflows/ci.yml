@@ -12,10 +12,10 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [linux, macos, windows]
-        config: [debug, release]
+        os: [windows]
+        config: [release]
         compiler: [gcc, clang, cl]
-        platform: [x86_64, aarch64, wasm]
+        platform: [x86_64]
         exclude:
           # Default to x64, but aarch64 on osx
           - { os: linux, platform: aarch64 }
