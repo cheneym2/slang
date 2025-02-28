@@ -2134,8 +2134,7 @@ SlangResult emitSPIRVForEntryPointsDirectly(
                             }
                         }
                     }
-                }
-            );
+                });
 
             SLANG_ASSERT(int(spirv.getCount()) % 4 == 0);
             SLANG_ASSERT(spirvFiles.size() == spirvSizes.size());
@@ -2144,7 +2143,7 @@ SlangResult emitSPIRVForEntryPointsDirectly(
                 (const uint32_t*)spirvSizes.data(),
                 (uint32_t)spirvFiles.size(),
                 linkedArtifact.writeRef());
-            
+
             if (linkresult != SLANG_OK)
             {
                 return SLANG_FAIL;
@@ -2152,7 +2151,7 @@ SlangResult emitSPIRVForEntryPointsDirectly(
 
             ComPtr<ISlangBlob> blob;
             linkedArtifact->loadBlob(ArtifactKeep::No, blob.writeRef());
-			
+
             artifact = _Move(linkedArtifact);
         }
 
