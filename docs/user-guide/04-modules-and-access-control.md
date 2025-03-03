@@ -204,7 +204,7 @@ This has the benefit that it is easy for a user to distinguish the public API fr
 
 ### Module Organization Example
 
-<img src="../assets/moduletree.png" width="50em" alt="Module organization tree diagram"/>
+<img src="../assets/moduletree.png" width="400em" alt="Module organization tree diagram"/>
 
 ### Module Organization Example
 
