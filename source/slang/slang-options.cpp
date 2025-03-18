@@ -2953,40 +2953,44 @@ SlangResult OptionsParser::_parse(int argc, char const* const* argv)
         case OptionKind::DumpModule:
             {
                 CommandLineArg fileName;
-                SLANG_RETURN_ON_FAIL(m_reader.expectArg(fileName));                
+                SLANG_RETURN_ON_FAIL(m_reader.expectArg(fileName));
                 auto desc = slang::SessionDesc();
                 ComPtr<slang::ISession> session;
                 m_session->createSession(desc, session.writeRef());
                 ComPtr<slang::IBlob> diagnostics;
 
                 // Coerce Slang to load from the given file, without letting it automatically
-                // choose .slang-module files over .slang files.  
+                // choose .slang-module files over .slang files.
                 // First try to load as source string, and fall back to loading as an IR Blob.
                 // Avoid guessing based on filename or inspect the file contents.
                 FILE* file = fopen(fileName.value.getBuffer(), "rb");
                 fseek(file, 0, SEEK_END);
                 size_t size = ftell(file);
                 fseek(file, 0, SEEK_SET);
-                std::vector<char> buffer(size+1);
+                std::vector<char> buffer(size + 1);
                 fread(buffer.data(), 1, size, file);
                 buffer[size] = 0;
                 fclose(file);
-                
+
                 ComPtr<slang::IModule> module;
-                module = session->loadModuleFromSourceString("module", "path", buffer.data(), diagnostics.writeRef());
+                module = session->loadModuleFromSourceString(
+                    "module",
+                    "path",
+                    buffer.data(),
+                    diagnostics.writeRef());
                 if (!module)
                 {
                     // Load buffer as an IR blob
                     ComPtr<slang::IBlob> blob;
                     blob = RawBlob::create(buffer.data(), size);
-                    
+
                     module = session->loadModuleFromIRBlob(
                         "module",
                         "path",
                         blob,
                         diagnostics.writeRef());
                 }
-                
+
                 if (module)
                 {
                     ComPtr<slang::IBlob> disassemblyBlob;
@@ -2997,7 +3001,9 @@ SlangResult OptionsParser::_parse(int argc, char const* const* argv)
                     }
                     else
                     {
-                        m_sink->diagnoseRaw(Severity::Note, (const char*)disassemblyBlob->getBufferPointer());                        
+                        m_sink->diagnoseRaw(
+                            Severity::Note,
+                            (const char*)disassemblyBlob->getBufferPointer());
                     }
                 }
                 else
@@ -3007,11 +3013,11 @@ SlangResult OptionsParser::_parse(int argc, char const* const* argv)
                         m_sink->diagnoseRaw(
                             Severity::Error,
                             (const char*)diagnostics->getBufferPointer());
-                    }                    
+                    }
                     return SLANG_FAIL;
                 }
-                
-                
+
+
                 break;
             }
         default:
